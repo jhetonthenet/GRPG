@@ -8,9 +8,8 @@
   <!--
     BASIC STYLES
     ------------
-    - Dark background (#111827 / #1F2933 style).
-    - Light text.
-    - Simple, clear layout: header, four columns of lists, and a details panel.
+    Dark background, light text, simple 2-column grid of lists
+    plus a details panel below.
   -->
   <style>
     * {
@@ -21,8 +20,8 @@
 
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #111827;            /* dark slate */
-      color: #e5e7eb;                 /* light gray text */
+      background: #111827;  /* dark slate */
+      color: #e5e7eb;       /* light gray text */
       min-height: 100vh;
     }
 
@@ -116,13 +115,13 @@
     }
 
     .record-button:hover {
-      background: #1f2937;            /* slightly lighter */
+      background: #1f2937;
       border-color: #374151;
     }
 
     .record-button.active {
       background: #111827;
-      border-color: #10b981;          /* emerald accent */
+      border-color: #10b981;  /* emerald accent */
       color: #ecfdf5;
     }
 
@@ -210,24 +209,18 @@
     <!--
       META BAR
       --------
-      This bar shows basic information about the data:
-      - Which data version is loaded
-      - When it was last updated
-      Everything comes from GRPG_LIBRARY.meta in the JS file.
+      Filled from GRPG_LIBRARY.meta.
+      Shows schema version, data version, and last updated date.
     -->
     <div class="meta-bar" id="metaBar">
       <span>Loading library...</span>
     </div>
 
     <!--
-      MAIN GRID
-      ---------
-      Left + right columns for the four categories:
-        - Races
-        - Classes
-        - Traits
-        - Abilities
-      Each list is filled by simple JS functions below.
+      FOUR CATEGORY LISTS
+      -------------------
+      Races, Classes, Traits, Abilities.
+      Each <ul> is populated by JavaScript using GRPG_LIBRARY.<category>.
     -->
     <main>
       <section class="grid">
@@ -259,10 +252,8 @@
       <!--
         DETAILS PANEL
         -------------
-        This is where we show the "currently selected" thing.
-        The JS will:
-          - Keep track of which record is selected.
-          - Replace the contents of this card whenever you click a list item.
+        When you click a record in any list, we update this panel
+        to show all the info about that record.
       -->
       <section class="details-card" id="detailsPanel">
         <p class="muted">Select a race, class, trait, or ability to see its details here.</p>
@@ -271,77 +262,62 @@
   </div>
 
   <!--
-    MAIN SCRIPT
-    ===========
-    We use a module so we can import from GRPGLibrary0.0.1.js.
-
-    IMPORTANT for GitHub Pages:
-    - The 'type="module"' attribute is what allows the 'import' keyword.
-    - The path './GRPGLibrary0.0.1.js' must match the filename in your repo.
+    1) Load the data file first.
+       This creates global window.GRPG_LIBRARY and window.TAG_DEFINITIONS.
   -->
-  <script type="module">
-    // Import the main library object from your data file.
-    import { GRPG_LIBRARY } from "./GRPGLibrary0.0.1.js";
+  <script src="GRPGLibrary0.0.1.js"></script>
 
-    // -----------------------------------------------------------------------
-    // 1. Helper: Get DOM elements we will use.
-    // -----------------------------------------------------------------------
-    const metaBar       = document.getElementById("metaBar");
-    const raceList      = document.getElementById("raceList");
-    const classList     = document.getElementById("classList");
-    const traitList     = document.getElementById("traitList");
-    const abilityList   = document.getElementById("abilityList");
-    const detailsPanel  = document.getElementById("detailsPanel");
+  <!--
+    2) Simple script that reads GRPG_LIBRARY and renders the page.
+  -->
+  <script>
+    // Keep track of the currently selected button so we can style it.
+    var currentActiveButton = null;
 
-    // This just tracks which button is "active" so we can style it.
-    let currentActiveButton = null;
-
-    // -----------------------------------------------------------------------
-    // 2. Render meta info at the top.
-    //    Reads GRPG_LIBRARY.meta and turns it into simple text.
-    // -----------------------------------------------------------------------
-    function renderMetaInfo() {
-      const meta = GRPG_LIBRARY.meta || {};
-      const schemaVersion = meta.schemaVersion || "unknown schema";
-      const dataVersion   = meta.dataVersion   || "unknown data version";
-      const lastUpdated   = meta.lastUpdated   || "unknown date";
-
-      metaBar.innerHTML = `
-        <span>Schema: ${schemaVersion}</span>
-        <span>Data: ${dataVersion}</span>
-        <span>Last updated: ${lastUpdated}</span>
-      `;
+    // Helper: safely get the library object (or null if missing).
+    function getLibrary() {
+      if (window.GRPG_LIBRARY) {
+        return window.GRPG_LIBRARY;
+      }
+      return null;
     }
 
-    // -----------------------------------------------------------------------
-    // 3. Generic function: create a button for a record in a list.
-    //
-    //    - categoryName: "Race", "Class", etc. (just for the details header).
-    //    - record: the actual data object from GRPG_LIBRARY (race, class, etc).
-    //    - listElement: the <ul> DOM element we append into.
-    //
-    //    When clicked, each button calls showDetails() with that record.
-    // -----------------------------------------------------------------------
-    function createRecordButton(categoryName, record, listElement) {
-      const li = document.createElement("li");
+    // Fill in the meta bar at the top of the page.
+    function renderMetaInfo(library) {
+      var meta = library.meta || {};
+      var schemaVersion = meta.schemaVersion || "unknown schema";
+      var dataVersion   = meta.dataVersion   || "unknown data version";
+      var lastUpdated   = meta.lastUpdated   || "unknown date";
 
-      const button = document.createElement("button");
+      var metaBar = document.getElementById("metaBar");
+      metaBar.innerHTML =
+        "<span>Schema: " + schemaVersion + "</span>" +
+        "<span>Data: " + dataVersion + "</span>" +
+        "<span>Last updated: " + lastUpdated + "</span>";
+    }
+
+    // Create one clickable list item for a record (race, class, etc.).
+    function addRecordButton(categoryName, record, listElement) {
+      var li = document.createElement("li");
+
+      var button = document.createElement("button");
       button.className = "record-button";
 
-      // Main line (name) and smaller summary text.
-      const nameDiv = document.createElement("div");
+      var nameDiv = document.createElement("div");
       nameDiv.className = "record-name";
       nameDiv.textContent = record.name || "(Unnamed)";
 
-      const summaryDiv = document.createElement("div");
+      var summaryDiv = document.createElement("div");
       summaryDiv.className = "record-summary";
       summaryDiv.textContent = record.summary || "";
 
       button.appendChild(nameDiv);
       button.appendChild(summaryDiv);
 
-      // When you click, mark as active and show the details on the right.
-      button.addEventListener("click", () => {
+      // When you click this item:
+      // 1) mark it as active (green border),
+      // 2) update the details panel with showDetails().
+      button.addEventListener("click", function () {
         if (currentActiveButton) {
           currentActiveButton.classList.remove("active");
         }
@@ -355,121 +331,125 @@
       listElement.appendChild(li);
     }
 
-    // -----------------------------------------------------------------------
-    // 4. Render the four categories.
-    //
-    //    GRPG_LIBRARY structure (simplified) looks like:
-    //      {
-    //        meta: {...},
-    //        races: { "race-id": {...}, ... },
-    //        classes: { "class-id": {...}, ... },
-    //        traits: { "trait-id": {...}, ... },
-    //        abilities: { "ability-id": {...}, ... },
-    //        ...
-    //      }
-    //
-    //    We convert each "dictionary" object into a list of values
-    //    with Object.values(...) and then create buttons for each one.
-    // -----------------------------------------------------------------------
-    function renderCategoryLists() {
-      // Clear any existing content first (so re-renders are safe).
+    // Render all four category lists from the library object.
+    function renderCategoryLists(library) {
+      var raceList    = document.getElementById("raceList");
+      var classList   = document.getElementById("classList");
+      var traitList   = document.getElementById("traitList");
+      var abilityList = document.getElementById("abilityList");
+
       raceList.innerHTML    = "";
       classList.innerHTML   = "";
       traitList.innerHTML   = "";
       abilityList.innerHTML = "";
 
-      const raceRecords    = Object.values(GRPG_LIBRARY.races    || {});
-      const classRecords   = Object.values(GRPG_LIBRARY.classes  || {});
-      const traitRecords   = Object.values(GRPG_LIBRARY.traits   || {});
-      const abilityRecords = Object.values(GRPG_LIBRARY.abilities || {});
+      var raceRecords    = library.races    ? Object.values(library.races)    : [];
+      var classRecords   = library.classes  ? Object.values(library.classes)  : [];
+      var traitRecords   = library.traits   ? Object.values(library.traits)   : [];
+      var abilityRecords = library.abilities? Object.values(library.abilities): [];
 
-      raceRecords.forEach((race)       => createRecordButton("Race",     race,    raceList));
-      classRecords.forEach((cls)      => createRecordButton("Class",    cls,     classList));
-      traitRecords.forEach((trait)    => createRecordButton("Trait",    trait,   traitList));
-      abilityRecords.forEach((ability)=> createRecordButton("Ability",  ability, abilityList));
+      for (var i = 0; i < raceRecords.length; i++) {
+        addRecordButton("Race", raceRecords[i], raceList);
+      }
+      for (var j = 0; j < classRecords.length; j++) {
+        addRecordButton("Class", classRecords[j], classList);
+      }
+      for (var k = 0; k < traitRecords.length; k++) {
+        addRecordButton("Trait", traitRecords[k], traitList);
+      }
+      for (var m = 0; m < abilityRecords.length; m++) {
+        addRecordButton("Ability", abilityRecords[m], abilityList);
+      }
     }
 
-    // -----------------------------------------------------------------------
-    // 5. Details panel.
-    //
-    //    This function takes any record (race, class, trait, ability)
-    //    and replaces the contents of #detailsPanel with:
-    //      - category name (Race/Class/etc.)
-    //      - record name
-    //      - tags
-    //      - summary
-    //      - long description
-    //      - mechanics text (if present)
-    // -----------------------------------------------------------------------
+    // Update the big details panel with the chosen record.
     function showDetails(categoryName, record) {
-      const tags = Array.isArray(record.tags) ? record.tags.join(", ") : "—";
+      var detailsPanel = document.getElementById("detailsPanel");
 
-      // Extract "rulesText" if this record has mechanics.rulesText.
-      let rulesText = "";
+      var tagsArray = Array.isArray(record.tags) ? record.tags : [];
+      var tags = tagsArray.length > 0 ? tagsArray.join(", ") : "—";
+
+      var rulesText = "";
       if (record.mechanics && typeof record.mechanics.rulesText === "string") {
         rulesText = record.mechanics.rulesText;
       }
 
-      detailsPanel.innerHTML = `
-        <div class="details-category">${categoryName}</div>
-        <div class="details-name">${record.name || "(Unnamed)"}</div>
-        <div class="details-tags"><strong>ID:</strong> ${record.id || "—"} | <strong>Tags:</strong> ${tags}</div>
-        <div class="details-summary">${record.summary || ""}</div>
-        <div class="details-description">${record.description || ""}</div>
+      var html = "";
 
-        ${
-          rulesText
-            ? `
-              <div class="details-section-label">Rules</div>
-              <div class="details-body-text">${rulesText}</div>
-            `
-            : ""
-        }
+      html += '<div class="details-category">' + categoryName + "</div>";
+      html += '<div class="details-name">' + (record.name || "(Unnamed)") + "</div>";
+      html += '<div class="details-tags"><strong>ID:</strong> ' +
+        (record.id || "—") +
+        " | <strong>Tags:</strong> " +
+        tags +
+        "</div>";
 
-        ${
-          record.source
-            ? `
-              <div class="details-section-label">Source</div>
-              <div class="details-body-text">
-                ${record.source.book || ""}${
-                  record.source.page ? `, p. ${record.source.page}` : ""
-                }
-              </div>
-            `
-            : ""
-        }
+      if (record.summary) {
+        html += '<div class="details-summary">' + record.summary + "</div>";
+      }
 
-        ${
-          record.version
-            ? `
-              <div class="details-section-label">Version</div>
-              <div class="details-body-text">
-                v${record.version.major ?? "?"}.${record.version.minor ?? "?"}
-                (created ${record.createdAt || "?"}, updated ${record.updatedAt || "?"})
-              </div>
-            `
-            : ""
+      if (record.description) {
+        html += '<div class="details-description">' + record.description + "</div>";
+      }
+
+      if (rulesText) {
+        html += '<div class="details-section-label">Rules</div>';
+        html += '<div class="details-body-text">' + rulesText + "</div>";
+      }
+
+      if (record.source) {
+        var srcText = (record.source.book || "");
+        if (record.source.page) {
+          srcText += ", p. " + record.source.page;
         }
-      `;
+        html += '<div class="details-section-label">Source</div>';
+        html += '<div class="details-body-text">' + srcText + "</div>";
+      }
+
+      if (record.version || record.createdAt || record.updatedAt) {
+        html += '<div class="details-section-label">Version</div>';
+        var versionParts = [];
+        if (record.version) {
+          var major = (record.version.major !== undefined) ? record.version.major : "?";
+          var minor = (record.version.minor !== undefined) ? record.version.minor : "?";
+          versionParts.push("v" + major + "." + minor);
+        }
+        if (record.createdAt) {
+          versionParts.push("created " + record.createdAt);
+        }
+        if (record.updatedAt) {
+          versionParts.push("updated " + record.updatedAt);
+        }
+        html += '<div class="details-body-text">' + versionParts.join(" · ") + "</div>";
+      }
+
+      detailsPanel.innerHTML = html;
     }
 
-    // -----------------------------------------------------------------------
-    // 6. Initialize everything.
-    //
-    //    This runs IMMEDIATELY when the module loads.
-    //    We:
-    //      - Render the meta information.
-    //      - Render all category lists.
-    //      - Optionally auto-select the first available record.
-    // -----------------------------------------------------------------------
-    renderMetaInfo();
-    renderCategoryLists();
+    // MAIN INITIALIZATION
+    // -------------------
+    (function init() {
+      var library = getLibrary();
 
-    // Auto-select the first available record so the panel is not empty.
-    const firstRace = Object.values(GRPG_LIBRARY.races || {})[0];
-    if (firstRace) {
-      showDetails("Race", firstRace);
-    }
+      // If something went wrong loading the data file, show an error.
+      if (!library) {
+        var detailsPanel = document.getElementById("detailsPanel");
+        detailsPanel.innerHTML =
+          '<p class="muted">Error: GRPGLibrary0.0.1.js did not load correctly. ' +
+          'Check that the file name matches exactly and is in the same folder as index.html.</p>';
+        return;
+      }
+
+      renderMetaInfo(library);
+      renderCategoryLists(library);
+
+      // Optionally show the first race by default so the panel isn't empty.
+      var firstRace = library.races ? Object.values(library.races)[0] : null;
+      if (firstRace) {
+        showDetails("Race", firstRace);
+      }
+    })();
   </script>
 </body>
 </html>
+
