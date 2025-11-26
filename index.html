@@ -5,12 +5,25 @@
   <title>G RPG Library Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!--
+    BASIC STYLES
+    ------------
+    - Dark background (#111827 / #1F2933 style).
+    - Light text.
+    - Simple, clear layout: header, four columns of lists, and a details panel.
+  -->
   <style>
-    body {
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
+    }
+
+    body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #111827;
-      color: #e5e7eb;
+      background: #111827;            /* dark slate */
+      color: #e5e7eb;                 /* light gray text */
+      min-height: 100vh;
     }
 
     .app-container {
@@ -19,304 +32,444 @@
       padding: 1.5rem;
     }
 
-    h1, h2, h3 {
-      margin: 0 0 0.5rem 0;
-      font-weight: 600;
-    }
-
     h1 {
       font-size: 1.8rem;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
 
-    h2 {
-      font-size: 1.4rem;
-      margin-top: 1.5rem;
-      border-bottom: 1px solid #374151;
-      padding-bottom: 0.25rem;
+    .subtitle {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      margin-bottom: 1.5rem;
     }
 
-    .meta {
-      margin-bottom: 1rem;
-      padding: 1rem;
-      border-radius: 0.75rem;
-      background: #020617;
-      border: 1px solid #1f2937;
-      font-size: 0.95rem;
-    }
-
-    .sections {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
+    .meta-bar {
+      background: #111827;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      padding: 0.5rem 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+      color: #9ca3af;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       gap: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
     }
 
-    @media (min-width: 900px) {
-      .sections {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .meta-bar span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
       }
     }
 
-    .card {
-      background: #020617;
-      border-radius: 0.75rem;
-      border: 1px solid #1f2937;
-      padding: 0.9rem 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
+    .section-card {
+      border-top: 1px solid #374151;
+      padding-top: 0.75rem;
     }
 
-    .card-header {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 0.5rem;
-    }
-
-    .card-name {
+    .section-title {
+      font-size: 1.1rem;
       font-weight: 600;
-      font-size: 1rem;
+      margin-bottom: 0.5rem;
     }
 
-    .card-type {
+    .list-help {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+    }
+
+    .record-list {
+      list-style: none;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+    }
+
+    .record-button {
+      width: 100%;
+      text-align: left;
+      font-size: 0.9rem;
+      padding: 0.4rem 0.6rem;
+      margin-bottom: 0.25rem;
+      border-radius: 0.375rem;
+      border: 1px solid transparent;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease;
+    }
+
+    .record-button:hover {
+      background: #1f2937;            /* slightly lighter */
+      border-color: #374151;
+    }
+
+    .record-button.active {
+      background: #111827;
+      border-color: #10b981;          /* emerald accent */
+      color: #ecfdf5;
+    }
+
+    .record-name {
+      font-weight: 500;
+      margin-bottom: 0.1rem;
+    }
+
+    .record-summary {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .details-card {
+      border-radius: 0.75rem;
+      border: 1px solid #374151;
+      background: #020617;
+      padding: 1rem 1.25rem;
+    }
+
+    .details-category {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6b7280;
+      margin-bottom: 0.25rem;
+    }
+
+    .details-name {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .details-tags {
       font-size: 0.75rem;
+      color: #9ca3af;
+      margin-bottom: 0.75rem;
+    }
+
+    .details-summary {
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .details-description {
+      font-size: 0.9rem;
+      color: #d1d5db;
+      margin-bottom: 0.75rem;
+      white-space: pre-line;
+    }
+
+    .details-section-label {
+      font-size: 0.8rem;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: #9ca3af;
+      margin: 0.75rem 0 0.25rem;
     }
 
-    .card-summary {
-      font-size: 0.9rem;
-      color: #d1d5db;
-    }
-
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.25rem;
-      margin-top: 0.25rem;
-    }
-
-    .tag {
-      font-size: 0.7rem;
-      padding: 0.15rem 0.4rem;
-      border-radius: 999px;
-      background: #111827;
-      border: 1px solid #374151;
-      color: #9ca3af;
-    }
-
-    .details-wrapper {
-      margin-top: 0.25rem;
-    }
-
-    details {
+    .details-body-text {
       font-size: 0.85rem;
-      background: #020617;
-      border-radius: 0.5rem;
-    }
-
-    details summary {
-      cursor: pointer;
-      list-style: none;
-      outline: none;
-      user-select: none;
-      padding: 0.3rem 0;
-      color: #9ca3af;
-    }
-
-    details[open] summary {
       color: #e5e7eb;
+      white-space: pre-line;
     }
 
-    summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .summary-chevron::before {
-      content: "▶";
-      display: inline-block;
-      margin-right: 0.35rem;
-      font-size: 0.7rem;
-      transform: translateY(-1px);
-    }
-
-    details[open] .summary-chevron::before {
-      content: "▼";
-    }
-
-    .details-body {
-      padding: 0.3rem 0;
-      border-top: 1px solid #1f2937;
-      margin-top: 0.3rem;
-      color: #d1d5db;
-      white-space: pre-wrap;
-    }
-
-    .small-label {
-      font-size: 0.75rem;
-      color: #9ca3af;
-    }
-
-    .monospace {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 0.8rem;
+    .muted {
+      color: #6b7280;
+      font-size: 0.85rem;
     }
   </style>
 </head>
+
 <body>
   <div class="app-container">
-    <h1>G RPG Library Viewer</h1>
+    <header>
+      <h1>G RPG Library Viewer</h1>
+      <p class="subtitle">
+        Simple viewer for your shared G&nbsp;RPG data file
+        (<code>GRPGLibrary0.0.1.js</code>).
+      </p>
+    </header>
 
-    <div id="meta" class="meta"></div>
-
-    <div class="sections">
-      <section id="races-section">
-        <h2>Races</h2>
-        <div id="races-list"></div>
-      </section>
-
-      <section id="classes-section">
-        <h2>Classes</h2>
-        <div id="classes-list"></div>
-      </section>
-
-      <section id="traits-section">
-        <h2>Traits</h2>
-        <div id="traits-list"></div>
-      </section>
-
-      <section id="abilities-section">
-        <h2>Abilities</h2>
-        <div id="abilities-list"></div>
-      </section>
+    <!--
+      META BAR
+      --------
+      This bar shows basic information about the data:
+      - Which data version is loaded
+      - When it was last updated
+      Everything comes from GRPG_LIBRARY.meta in the JS file.
+    -->
+    <div class="meta-bar" id="metaBar">
+      <span>Loading library...</span>
     </div>
+
+    <!--
+      MAIN GRID
+      ---------
+      Left + right columns for the four categories:
+        - Races
+        - Classes
+        - Traits
+        - Abilities
+      Each list is filled by simple JS functions below.
+    -->
+    <main>
+      <section class="grid">
+        <div class="section-card">
+          <h2 class="section-title">Races</h2>
+          <p class="list-help">Click a race to see its full details.</p>
+          <ul id="raceList" class="record-list"></ul>
+        </div>
+
+        <div class="section-card">
+          <h2 class="section-title">Classes</h2>
+          <p class="list-help">Click a class to see its full details.</p>
+          <ul id="classList" class="record-list"></ul>
+        </div>
+
+        <div class="section-card">
+          <h2 class="section-title">Traits</h2>
+          <p class="list-help">Click a trait to see its full details.</p>
+          <ul id="traitList" class="record-list"></ul>
+        </div>
+
+        <div class="section-card">
+          <h2 class="section-title">Abilities</h2>
+          <p class="list-help">Click an ability to see its full details.</p>
+          <ul id="abilityList" class="record-list"></ul>
+        </div>
+      </section>
+
+      <!--
+        DETAILS PANEL
+        -------------
+        This is where we show the "currently selected" thing.
+        The JS will:
+          - Keep track of which record is selected.
+          - Replace the contents of this card whenever you click a list item.
+      -->
+      <section class="details-card" id="detailsPanel">
+        <p class="muted">Select a race, class, trait, or ability to see its details here.</p>
+      </section>
+    </main>
   </div>
 
-  <!-- ONE script tag, everything inside it -->
+  <!--
+    MAIN SCRIPT
+    ===========
+    We use a module so we can import from GRPGLibrary0.0.1.js.
+
+    IMPORTANT for GitHub Pages:
+    - The 'type="module"' attribute is what allows the 'import' keyword.
+    - The path './GRPGLibrary0.0.1.js' must match the filename in your repo.
+  -->
   <script type="module">
-    import { GRPG_LIBRARY } from './GRPGLibrary0.0.1.js';
+    // Import the main library object from your data file.
+    import { GRPG_LIBRARY } from "./GRPGLibrary0.0.1.js";
 
-    function el(tag, className, text) {
-      const node = document.createElement(tag);
-      if (className) node.className = className;
-      if (text !== undefined) node.textContent = text;
-      return node;
+    // -----------------------------------------------------------------------
+    // 1. Helper: Get DOM elements we will use.
+    // -----------------------------------------------------------------------
+    const metaBar       = document.getElementById("metaBar");
+    const raceList      = document.getElementById("raceList");
+    const classList     = document.getElementById("classList");
+    const traitList     = document.getElementById("traitList");
+    const abilityList   = document.getElementById("abilityList");
+    const detailsPanel  = document.getElementById("detailsPanel");
+
+    // This just tracks which button is "active" so we can style it.
+    let currentActiveButton = null;
+
+    // -----------------------------------------------------------------------
+    // 2. Render meta info at the top.
+    //    Reads GRPG_LIBRARY.meta and turns it into simple text.
+    // -----------------------------------------------------------------------
+    function renderMetaInfo() {
+      const meta = GRPG_LIBRARY.meta || {};
+      const schemaVersion = meta.schemaVersion || "unknown schema";
+      const dataVersion   = meta.dataVersion   || "unknown data version";
+      const lastUpdated   = meta.lastUpdated   || "unknown date";
+
+      metaBar.innerHTML = `
+        <span>Schema: ${schemaVersion}</span>
+        <span>Data: ${dataVersion}</span>
+        <span>Last updated: ${lastUpdated}</span>
+      `;
     }
 
-    function renderTags(container, tags) {
-      if (!tags || !tags.length) return;
-      const wrap = el('div', 'tags');
-      tags.forEach(tag => wrap.appendChild(el('span', 'tag', tag)));
-      container.appendChild(wrap);
+    // -----------------------------------------------------------------------
+    // 3. Generic function: create a button for a record in a list.
+    //
+    //    - categoryName: "Race", "Class", etc. (just for the details header).
+    //    - record: the actual data object from GRPG_LIBRARY (race, class, etc).
+    //    - listElement: the <ul> DOM element we append into.
+    //
+    //    When clicked, each button calls showDetails() with that record.
+    // -----------------------------------------------------------------------
+    function createRecordButton(categoryName, record, listElement) {
+      const li = document.createElement("li");
+
+      const button = document.createElement("button");
+      button.className = "record-button";
+
+      // Main line (name) and smaller summary text.
+      const nameDiv = document.createElement("div");
+      nameDiv.className = "record-name";
+      nameDiv.textContent = record.name || "(Unnamed)";
+
+      const summaryDiv = document.createElement("div");
+      summaryDiv.className = "record-summary";
+      summaryDiv.textContent = record.summary || "";
+
+      button.appendChild(nameDiv);
+      button.appendChild(summaryDiv);
+
+      // When you click, mark as active and show the details on the right.
+      button.addEventListener("click", () => {
+        if (currentActiveButton) {
+          currentActiveButton.classList.remove("active");
+        }
+        button.classList.add("active");
+        currentActiveButton = button;
+
+        showDetails(categoryName, record);
+      });
+
+      li.appendChild(button);
+      listElement.appendChild(li);
     }
 
-    function createRecordCard(record) {
-      const card = el('article', 'card');
+    // -----------------------------------------------------------------------
+    // 4. Render the four categories.
+    //
+    //    GRPG_LIBRARY structure (simplified) looks like:
+    //      {
+    //        meta: {...},
+    //        races: { "race-id": {...}, ... },
+    //        classes: { "class-id": {...}, ... },
+    //        traits: { "trait-id": {...}, ... },
+    //        abilities: { "ability-id": {...}, ... },
+    //        ...
+    //      }
+    //
+    //    We convert each "dictionary" object into a list of values
+    //    with Object.values(...) and then create buttons for each one.
+    // -----------------------------------------------------------------------
+    function renderCategoryLists() {
+      // Clear any existing content first (so re-renders are safe).
+      raceList.innerHTML    = "";
+      classList.innerHTML   = "";
+      traitList.innerHTML   = "";
+      abilityList.innerHTML = "";
 
-      const header = el('div', 'card-header');
-      const name = el('div', 'card-name', record.name || record.id);
-      const typeLabel = el('div', 'card-type', record.type || 'unknown');
-      header.appendChild(name);
-      header.appendChild(typeLabel);
-      card.appendChild(header);
+      const raceRecords    = Object.values(GRPG_LIBRARY.races    || {});
+      const classRecords   = Object.values(GRPG_LIBRARY.classes  || {});
+      const traitRecords   = Object.values(GRPG_LIBRARY.traits   || {});
+      const abilityRecords = Object.values(GRPG_LIBRARY.abilities || {});
 
-      if (record.summary) {
-        card.appendChild(el('div', 'card-summary', record.summary));
-      }
-
-      renderTags(card, record.tags);
-
-      const detailsWrapper = el('div', 'details-wrapper');
-      const details = document.createElement('details');
-      const summary = document.createElement('summary');
-      const summaryLabel = el('span', 'summary-chevron', 'Details');
-      summary.appendChild(summaryLabel);
-      details.appendChild(summary);
-
-      const detailsBody = el('div', 'details-body');
-
-      if (record.description) {
-        const descLabel = el('div', 'small-label', 'Description:');
-        const descText = el('div', null, record.description);
-        detailsBody.appendChild(descLabel);
-        detailsBody.appendChild(descText);
-      }
-
-      if (record.mechanics) {
-        const mechLabel = el('div', 'small-label', 'Mechanics:');
-        const mechText = el('pre', 'monospace', JSON.stringify(record.mechanics, null, 2));
-        detailsBody.appendChild(mechLabel);
-        detailsBody.appendChild(mechText);
-      }
-
-      const metaLines = [];
-      if (record.source && record.source.book) {
-        const page = record.source.page ? ` (p. ${record.source.page})` : '';
-        metaLines.push(`Source: ${record.source.book}${page}`);
-      }
-      if (record.version) {
-        metaLines.push(`Version: ${record.version.major}.${record.version.minor}`);
-      }
-      if (record.createdAt || record.updatedAt) {
-        const created = record.createdAt ? `Created: ${record.createdAt}` : '';
-        const updated = record.updatedAt ? `Updated: ${record.updatedAt}` : '';
-        metaLines.push([created, updated].filter(Boolean).join(' | '));
-      }
-
-      if (metaLines.length) {
-        const metaLabel = el('div', 'small-label', 'Meta:');
-        const metaText = el('div', 'monospace', metaLines.join('\n'));
-        detailsBody.appendChild(metaLabel);
-        detailsBody.appendChild(metaText);
-      }
-
-      details.appendChild(detailsBody);
-      detailsWrapper.appendChild(details);
-      card.appendChild(detailsWrapper);
-
-      return card;
+      raceRecords.forEach((race)       => createRecordButton("Race",     race,    raceList));
+      classRecords.forEach((cls)      => createRecordButton("Class",    cls,     classList));
+      traitRecords.forEach((trait)    => createRecordButton("Trait",    trait,   traitList));
+      abilityRecords.forEach((ability)=> createRecordButton("Ability",  ability, abilityList));
     }
 
-    function renderSection(containerId, recordsObj) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = '';
+    // -----------------------------------------------------------------------
+    // 5. Details panel.
+    //
+    //    This function takes any record (race, class, trait, ability)
+    //    and replaces the contents of #detailsPanel with:
+    //      - category name (Race/Class/etc.)
+    //      - record name
+    //      - tags
+    //      - summary
+    //      - long description
+    //      - mechanics text (if present)
+    // -----------------------------------------------------------------------
+    function showDetails(categoryName, record) {
+      const tags = Array.isArray(record.tags) ? record.tags.join(", ") : "—";
 
-      const records = Object.values(recordsObj || {});
-      if (!records.length) {
-        container.textContent = 'No records yet.';
-        return;
+      // Extract "rulesText" if this record has mechanics.rulesText.
+      let rulesText = "";
+      if (record.mechanics && typeof record.mechanics.rulesText === "string") {
+        rulesText = record.mechanics.rulesText;
       }
 
-      records.forEach(record => container.appendChild(createRecordCard(record)));
+      detailsPanel.innerHTML = `
+        <div class="details-category">${categoryName}</div>
+        <div class="details-name">${record.name || "(Unnamed)"}</div>
+        <div class="details-tags"><strong>ID:</strong> ${record.id || "—"} | <strong>Tags:</strong> ${tags}</div>
+        <div class="details-summary">${record.summary || ""}</div>
+        <div class="details-description">${record.description || ""}</div>
+
+        ${
+          rulesText
+            ? `
+              <div class="details-section-label">Rules</div>
+              <div class="details-body-text">${rulesText}</div>
+            `
+            : ""
+        }
+
+        ${
+          record.source
+            ? `
+              <div class="details-section-label">Source</div>
+              <div class="details-body-text">
+                ${record.source.book || ""}${
+                  record.source.page ? `, p. ${record.source.page}` : ""
+                }
+              </div>
+            `
+            : ""
+        }
+
+        ${
+          record.version
+            ? `
+              <div class="details-section-label">Version</div>
+              <div class="details-body-text">
+                v${record.version.major ?? "?"}.${record.version.minor ?? "?"}
+                (created ${record.createdAt || "?"}, updated ${record.updatedAt || "?"})
+              </div>
+            `
+            : ""
+        }
+      `;
     }
 
-    function renderMeta() {
-      const metaDiv = document.getElementById('meta');
-      const meta = (GRPG_LIBRARY && GRPG_LIBRARY.meta) || {};
+    // -----------------------------------------------------------------------
+    // 6. Initialize everything.
+    //
+    //    This runs IMMEDIATELY when the module loads.
+    //    We:
+    //      - Render the meta information.
+    //      - Render all category lists.
+    //      - Optionally auto-select the first available record.
+    // -----------------------------------------------------------------------
+    renderMetaInfo();
+    renderCategoryLists();
 
-      const lines = [];
-      if (meta.schemaVersion) lines.push(`Schema version: ${meta.schemaVersion}`);
-      if (meta.dataVersion) lines.push(`Data version: ${meta.dataVersion}`);
-      if (meta.lastUpdated) lines.push(`Last updated: ${meta.lastUpdated}`);
-      if (meta.notes) {
-        lines.push('');
-        lines.push(meta.notes);
-      }
-
-      metaDiv.textContent = lines.join('\n');
+    // Auto-select the first available record so the panel is not empty.
+    const firstRace = Object.values(GRPG_LIBRARY.races || {})[0];
+    if (firstRace) {
+      showDetails("Race", firstRace);
     }
-
-    function init() {
-      renderMeta();
-      renderSection('races-list', GRPG_LIBRARY.races);
-      renderSection('classes-list', GRPG_LIBRARY.classes);
-      renderSection('traits-list', GRPG_LIBRARY.traits);
-      renderSection('abilities-list', GRPG_LIBRARY.abilities);
-    }
-
-    init();
   </script>
 </body>
 </html>
