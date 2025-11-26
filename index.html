@@ -202,7 +202,7 @@
       <h1>G RPG Library Viewer</h1>
       <p class="subtitle">
         Simple viewer for your shared G&nbsp;RPG data file
-        (<code>GRPGLibrary0.0.1.js</code>).
+        (<code>library.js</code>).
       </p>
     </header>
 
@@ -265,7 +265,7 @@
     1) Load the data file first.
        This creates global window.GRPG_LIBRARY and window.TAG_DEFINITIONS.
   -->
-  <script src="GRPGLibrary0.0.1.js"></script>
+  <script src="library.js"></script>
 
   <!--
     2) Simple script that reads GRPG_LIBRARY and renders the page.
@@ -435,7 +435,7 @@
       if (!library) {
         var detailsPanel = document.getElementById("detailsPanel");
         detailsPanel.innerHTML =
-          '<p class="muted">Error: GRPGLibrary0.0.1.js did not load correctly. ' +
+          '<p class="muted">Error: library.js did not load correctly. ' +
           'Check that the file name matches exactly and is in the same folder as index.html.</p>';
         return;
       }
@@ -452,4 +452,3 @@
   </script>
 </body>
 </html>
-
