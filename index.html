@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>G RPG Library Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    /* (same styles as before) */
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111827;
+      color: #e5e7eb;
+    }
+
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 0.5rem 0;
+      font-weight: 600;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      margin-top: 1.5rem;
+      border-bottom: 1px solid #374151;
+      padding-bottom: 0.25rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+    }
+
+    .meta {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: #020617;
+      border: 1px solid #1f2937;
+      font-size: 0.95rem;
+    }
+
+    .sections {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
+    }
+
+    @media (min-width: 900px) {
+      .sections {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 0.75rem;
+      border: 1px solid #1f2937;
+      padding: 0.9rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .card-name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .card-type {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+    }
+
+    .card-summary {
+      font-size: 0.9rem;
+      color: #d1d5db;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      margin-top: 0.25rem;
+    }
+
+    .tag {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 999px;
+      background: #111827;
+      border: 1px solid #374151;
+      color: #9ca3af;
+    }
+
+    .details-wrapper {
+      margin-top: 0.25rem;
+    }
+
+    details {
+      font-size: 0.85rem;
+      background: #020617;
+      border-radius: 0.5rem;
+    }
+
+    details summary {
+      cursor: pointer;
+      list-style: none;
+      outline: none;
+      user-select: none;
+      padding: 0.3rem 0;
+      color: #9ca3af;
+    }
+
+    details[open] summary {
+      color: #e5e7eb;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .summary-chevron::before {
+      content: "▶";
+      display: inline-block;
+      margin-right: 0.35rem;
+      font-size: 0.7rem;
+      transform: translateY(-1px);
+    }
+
+    details[open] .summary-chevron::before {
+      content: "▼";
+    }
+
+    .details-body {
+      padding: 0.3rem 0;
+      border-top: 1px solid #1f2937;
+      margin-top: 0.3rem;
+      color: #d1d5db;
+      white-space: pre-wrap;
+    }
+
+    .small-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    .monospace {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <h1>G RPG Library Viewer</h1>
+
+    <div id="meta" class="meta"></div>
+
+    <div class="sections">
+      <section id="races-section">
+        <h2>Races</h2>
+        <div id="races-list"></div>
+      </section>
+
+      <section id="classes-section">
+        <h2>Classes</h2>
+        <div id="classes-list"></div>
+      </section>
+
+      <section id="traits-section">
+        <h2>Traits</h2>
+        <div id="traits-list"></div>
+      </section>
+
+      <section id="abilities-section">
+        <h2>Abilities</h2>
+        <div id="abilities-list"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Load the library first so window.GRPG_LIBRARY exists -->
+  <script src="./GRPGLibrary0.0.1.js"></script>
+
+  <!-- MAIN APP LOGIC -->
+  <script>
+    // Pull the library off the window
+    const GRPG_LIBRARY = window.GRPG_LIBRARY;
+
+    /* ---------------------------------------------------------------------- */
+    /* HELPER FUNCTIONS                                                       */
+    /* ---------------------------------------------------------------------- */
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function renderTags(container, tags) {
+      if (!tags || !tags.length) return;
+      const wrap = el('div', 'tags');
+      tags.forEach(tag => wrap.appendChild(el('span', 'tag', tag)));
+      container.appendChild(wrap);
+    }
+
+    function createRecordCard(record) {
+      const card = el('article', 'card');
+
+      const header = el('div', 'card-header');
+      const name = el('div', 'card-name', record.name || record.id);
+      const typeLabel = el('div', 'card-type', record.type || 'unknown');
+      header.appendChild(name);
+      header.appendChild(typeLabel);
+      card.appendChild(header);
+
+      if (record.summary) {
+        card.appendChild(el('div', 'card-summary', record.summary));
+      }
+
+      renderTags(card, record.tags);
+
+      const detailsWrapper = el('div', 'details-wrapper');
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      const summaryLabel = el('span', 'summary-chevron', 'Details');
+      summary.appendChild(summaryLabel);
+      details.appendChild(summary);
+
+      const detailsBody = el('div', 'details-body');
+
+      if (record.description) {
+        const descLabel = el('div', 'small-label', 'Description:');
+        const descText = el('div', null, record.description);
+        detailsBody.appendChild(descLabel);
+        detailsBody.appendChild(descText);
+      }
+
+      if (record.mechanics) {
+        const mechLabel = el('div', 'small-label', 'Mechanics:');
+        const mechText = el('pre', 'monospace', JSON.stringify(record.mechanics, null, 2));
+        detailsBody.appendChild(mechLabel);
+        detailsBody.appendChild(mechText);
+      }
+
+      const metaLines = [];
+      if (record.source && record.source.book) {
+        const page = record.source.page ? ` (p. ${record.source.page})` : '';
+        metaLines.push(`Source: ${record.source.book}${page}`);
+      }
+      if (record.version) {
+        metaLines.push(`Version: ${record.version.major}.${record.version.minor}`);
+      }
+      if (record.createdAt || record.updatedAt) {
+        const created = record.createdAt ? `Created: ${record.createdAt}` : '';
+        const updated = record.updatedAt ? `Updated: ${record.updatedAt}` : '';
+        metaLines.push([created, updated].filter(Boolean).join(' | '));
+      }
+
+      if (metaLines.length) {
+        const metaLabel = el('div', 'small-label', 'Meta:');
+        const metaText = el('div', 'monospace', metaLines.join('\n'));
+        detailsBody.appendChild(metaLabel);
+        detailsBody.appendChild(metaText);
+      }
+
+      details.appendChild(detailsBody);
+      detailsWrapper.appendChild(details);
+      card.appendChild(detailsWrapper);
+
+      return card;
+    }
+
+    function renderSection(containerId, recordsObj) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+
+      const records = Object.values(recordsObj || {});
+      if (!records.length) {
+        container.textContent = 'No records yet.';
+        return;
+      }
+
+      records.forEach(record => container.appendChild(createRecordCard(record)));
+    }
+
+    function renderMeta() {
+      const metaDiv = document.getElementById('meta');
+      const meta = (GRPG_LIBRARY && GRPG_LIBRARY.meta) || {};
+
+      const lines = [];
+      if (meta.schemaVersion) lines.push(`Schema version: ${meta.schemaVersion}`);
+      if (meta.dataVersion) lines.push(`Data version: ${meta.dataVersion}`);
+      if (meta.lastUpdated) lines.push(`Last updated: ${meta.lastUpdated}`);
+      if (meta.notes) {
+        lines.push('');
+        lines.push(meta.notes);
+      }
+
+      metaDiv.textContent = lines.join('\n');
+    }
+
+    function init() {
+      if (!GRPG_LIBRARY) {
+        document.getElementById('meta').textContent =
+          'Error: GRPG_LIBRARY not loaded. Check script paths.';
+        return;
+      }
+
+      renderMeta();
+      renderSection('races-list', GRPG_LIBRARY.races);
+      renderSection('classes-list', GRPG_LIBRARY.classes);
+      renderSection('traits-list', GRPG_LIBRARY.traits);
+      renderSection('abilities-list', GRPG_LIBRARY.abilities);
+    }
+
+    init();
+  </script>
+</body>
+</html>
