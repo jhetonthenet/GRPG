@@ -199,11 +199,13 @@
     </div>
   </div>
 
-  <!-- Load the library first so window.GRPG_LIBRARY exists -->
-  <script src="./GRPGLibrary0.0.1.js"></script>
+  <!-- NO extra script tags above this -->
+  <script type="module">
+    import { GRPG_LIBRARY } from './GRPGLibrary0.0.1.js';
 
-  <!-- MAIN APP LOGIC -->
-  <script>
+  // … rest of the viewer code exactly like in the file you uploaded …
+  </script>
+
     // Pull the library off the window
     const GRPG_LIBRARY = window.GRPG_LIBRARY;
 
@@ -339,3 +341,4 @@
   </script>
 </body>
 </html>
+
