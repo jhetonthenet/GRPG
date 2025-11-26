@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
-    /* (same styles as before) */
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -199,19 +198,10 @@
     </div>
   </div>
 
-  <!-- NO extra script tags above this -->
+  <!-- ONE script tag, everything inside it -->
   <script type="module">
+    // Import the library (ES module)
     import { GRPG_LIBRARY } from './GRPGLibrary0.0.1.js';
-
-  // … rest of the viewer code exactly like in the file you uploaded …
-  </script>
-
-    // Pull the library off the window
-    const GRPG_LIBRARY = window.GRPG_LIBRARY;
-
-    /* ---------------------------------------------------------------------- */
-    /* HELPER FUNCTIONS                                                       */
-    /* ---------------------------------------------------------------------- */
 
     function el(tag, className, text) {
       const node = document.createElement(tag);
@@ -324,12 +314,6 @@
     }
 
     function init() {
-      if (!GRPG_LIBRARY) {
-        document.getElementById('meta').textContent =
-          'Error: GRPG_LIBRARY not loaded. Check script paths.';
-        return;
-      }
-
       renderMeta();
       renderSection('races-list', GRPG_LIBRARY.races);
       renderSection('classes-list', GRPG_LIBRARY.classes);
@@ -341,4 +325,3 @@
   </script>
 </body>
 </html>
-
