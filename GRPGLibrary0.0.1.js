@@ -41,7 +41,7 @@ This is documentation; apps don’t have to load it at runtime, but it’s usefu
 for tools and for humans.
 */
 
-export const TAG_DEFINITIONS = {
+const TAG_DEFINITIONS = {
   /* ----- Type tags: what KIND of thing is this? ----- */
   "type:race": {
     category: "type",
@@ -210,20 +210,10 @@ Top-level shape:
 }
 */
 
-export const GRPG_LIBRARY = {
+window.GRPG_LIBRARY = {
   /* ------------------------------------------------------------------------ */
   /* META                                                                     */
   /* ------------------------------------------------------------------------ */
-  /*
-  DESCRIBES:
-  - Library-wide information such as schema version and notes.
-
-  FIELDS:
-  - schemaVersion: string  | Semantic version of the *structure* (e.g. "1.0.0").
-  - dataVersion:   string  | Version of the current data content (e.g. "0.1.0").
-  - lastUpdated:   string  | ISO date when this file was last meaningfully edited.
-  - notes:         string  | Free-form notes for future-you.
-  */
   meta: {
     schemaVersion: "1.0.0",
     dataVersion: "0.1.0",
@@ -234,63 +224,12 @@ export const GRPG_LIBRARY = {
   /* ------------------------------------------------------------------------ */
   /* TAGS                                                                     */
   /* ------------------------------------------------------------------------ */
-  /*
-  DESCRIBES:
-  - A mirror or subset of TAG_DEFINITIONS that can be shipped with apps if
-    needed. You can keep this in sync with TAG_DEFINITIONS, or leave this
-    empty in production and only use TAG_DEFINITIONS for docs.
-
-  SHAPE:
-  {
-    [tagName: string]: {
-      category: string;
-      description: string;
-    }
-  }
-  */
   tags: TAG_DEFINITIONS,
 
   /* ------------------------------------------------------------------------ */
   /* RACES                                                                    */
   /* ------------------------------------------------------------------------ */
-  /*
-  DESCRIBES:
-  - Playable species / ancestries in G RPG (e.g., Tettari, Feyrdrin, Wildeman).
-
-  SHAPE:
   races: {
-    [raceId: string]: {
-      id:          string;
-      type:        "race";
-      name:        string;
-      summary:     string;
-      description: string;
-      tags:        string[];
-      source:      { book: string; page?: number; };
-      version:     { major: number; minor: number; };
-      createdAt:   string;
-      updatedAt:   string;
-
-      // GAME MECHANICS
-      mechanics: {
-        attributeMods?: { [attributeId: string]: number };  // e.g. { "agility": +2 }
-        baseSpeed?: number;                                 // generic movement unit
-        senses?: string[];                                  // e.g. ["darkvision", "tremorsense"]
-        innateTraits?: string[];                            // trait IDs
-        innateAbilities?: string[];                         // ability IDs
-      };
-
-      // LORE / WORLD INFO
-      lore?: {
-        homeland?: string;          // e.g. "Broken Ley Wilds"
-        cultureNotes?: string;
-        appearanceNotes?: string;
-      };
-    }
-  }
-  */
-  races: {
-    // EXAMPLE ONLY – stubbed Tettari record. Flesh this out later.
     "race-tettari": {
       id: "race-tettari",
       type: "race",
@@ -323,38 +262,7 @@ export const GRPG_LIBRARY = {
   /* ------------------------------------------------------------------------ */
   /* CLASSES                                                                  */
   /* ------------------------------------------------------------------------ */
-  /*
-  DESCRIBES:
-  - Character archetypes / roles (e.g., Warden, Ranger, Arcanist).
-
-  SHAPE:
   classes: {
-    [classId: string]: {
-      id:          string;
-      type:        "class";
-      name:        string;
-      summary:     string;
-      description: string;
-      tags:        string[];
-      source:      { book: string; page?: number; };
-      version:     { major: number; minor: number; };
-      createdAt:   string;
-      updatedAt:   string;
-
-      // RULES HOOKS
-      mechanics: {
-        primaryRoles: string[];        // e.g. ["role:skirmisher", "role:support"]
-        hitDie?: string;               // e.g. "d8" (if using hit dice)
-        resourceModel?: string;        // e.g. "stamina", "focus", "weave-charges"
-        startingTraits?: string[];     // trait IDs
-        startingAbilities?: string[];  // ability IDs
-        progressionNotes?: string;     // overview of how this class grows.
-      };
-    }
-  }
-  */
-  classes: {
-    // stub example
     "class-warden": {
       id: "class-warden",
       type: "class",
@@ -382,94 +290,16 @@ export const GRPG_LIBRARY = {
   /* ------------------------------------------------------------------------ */
   /* ORIGINS                                                                  */
   /* ------------------------------------------------------------------------ */
-  /*
-  DESCRIBES:
-  - Background-style pieces that define where a character comes from
-    (e.g., Fleet-born, Leyline Refugee, Underground Native).
-
-  SHAPE:
-  origins: {
-    [originId: string]: {
-      id:          string;
-      type:        "origin";
-      name:        string;
-      summary:     string;
-      description: string;
-      tags:        string[];
-      source:      { book: string; page?: number; };
-      version:     { major: number; minor: number; };
-      createdAt:   string;
-      updatedAt:   string;
-
-      mechanics: {
-        startingTrait?: string;       // trait ID
-        startingAbility?: string;     // ability ID
-        skillBonuses?: { [skillId: string]: number };
-      };
-    }
-  }
-  */
   origins: {},
 
   /* ------------------------------------------------------------------------ */
   /* CIRCLES                                                                  */
   /* ------------------------------------------------------------------------ */
-  /*
-  DESCRIBES:
-  - Magical / specialty circles in GRPG, often connected to the Weave.
-
-  SHAPE:
-  circles: {
-    [circleId: string]: {
-      id:          string;
-      type:        "circle";
-      name:        string;
-      summary:     string;
-      description: string;
-      tags:        string[];
-      source:      { book: string; page?: number; };
-      version:     { major: number; minor: number; };
-      createdAt:   string;
-      updatedAt:   string;
-
-      mechanics: {
-        focusStat?: string;           // e.g. "willpower"
-        signatureAbilities?: string[];// ability IDs
-      };
-    }
-  }
-  */
   circles: {},
 
   /* ------------------------------------------------------------------------ */
   /* TRAITS (Adventuring Traits / Passives)                                   */
   /* ------------------------------------------------------------------------ */
-  /*
-  DESCRIBES:
-  - Passive effects / always-on bonuses.
-
-  SHAPE:
-  traits: {
-    [traitId: string]: {
-      id:          string;
-      type:        "trait";
-      name:        string;
-      summary:     string;
-      description: string;
-      tags:        string[];
-      source:      { book: string; page?: number; };
-      version:     { major: number; minor: number; };
-      createdAt:   string;
-      updatedAt:   string;
-
-      mechanics: {
-        // Free-form, but try to use consistent wording and structure so
-        // apps can eventually parse some of it if needed.
-        rulesText: string;
-      };
-    }
-  }
-  */
   traits: {
     "trait-tettari-survivor": {
       id: "trait-tettari-survivor",
@@ -493,34 +323,6 @@ export const GRPG_LIBRARY = {
   /* ------------------------------------------------------------------------ */
   /* ABILITIES (Adventuring Abilities / Active Moves)                         */
   /* ------------------------------------------------------------------------ */
-  /*
-  DESCRIBES:
-  - Active moves players choose and trigger (combat, exploration, social, etc.).
-
-  SHAPE:
-  abilities: {
-    [abilityId: string]: {
-      id:          string;
-      type:        "ability";
-      name:        string;
-      summary:     string;
-      description: string;
-      tags:        string[];
-      source:      { book: string; page?: number; };
-      version:     { major: number; minor: number; };
-      createdAt:   string;
-      updatedAt:   string;
-
-      mechanics: {
-        actionType?: string;      // e.g. "action", "bonus", "reaction", "passive"
-        range?: string;           // e.g. "self", "melee", "10 meters", "line of sight"
-        duration?: string;        // e.g. "instant", "1 round", "concentration"
-        target?: string;          // e.g. "one creature you can see"
-        rulesText: string;        // full rules explanation
-      };
-    }
-  }
-  */
   abilities: {
     "ability-mark-prey": {
       id: "ability-mark-prey",
@@ -554,64 +356,10 @@ export const GRPG_LIBRARY = {
   /* ------------------------------------------------------------------------ */
   /* ITEMS                                                                    */
   /* ------------------------------------------------------------------------ */
-  /*
-  DESCRIBES:
-  - Weapons, armor, gear, consumables, etc.
-
-  SHAPE:
-  items: {
-    [itemId: string]: {
-      id:          string;
-      type:        "item";
-      name:        string;
-      summary:     string;
-      description: string;
-      tags:        string[];
-      source:      { book: string; page?: number; };
-      version:     { major: number; minor: number; };
-      createdAt:   string;
-      updatedAt:   string;
-
-      mechanics: {
-        itemType:  string;        // e.g. "weapon", "armor", "gear"
-        rarity?:   string;        // e.g. "common", "rare", "unique"
-        // generic slots for actual rules; we can refine later:
-        properties?: string[];    // e.g. ["two-handed", "precise"]
-        rulesText?: string;
-      };
-    }
-  }
-  */
   items: {},
 
   /* ------------------------------------------------------------------------ */
   /* PROFESSIONS                                                              */
   /* ------------------------------------------------------------------------ */
-  /*
-  DESCRIBES:
-  - Non-combat roles or secondary expertise (blacksmith, scholar, etc.).
-
-  SHAPE:
-  professions: {
-    [professionId: string]: {
-      id:          string;
-      type:        "profession";
-      name:        string;
-      summary:     string;
-      description: string;
-      tags:        string[];
-      source:      { book: string; page?: number; };
-      version:     { major: number; minor: number; };
-      createdAt:   string;
-      updatedAt:   string;
-
-      mechanics: {
-        skillBonuses?: { [skillId: string]: number };
-        incomeNotes?: string;
-        downtimeOptions?: string;
-      };
-    }
-  }
-  */
   professions: {},
 };
