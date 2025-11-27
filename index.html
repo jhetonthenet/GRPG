@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>G RPG Library Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111827;  /* dark slate */
+      color: #e5e7eb;       /* light gray text */
+      min-height: 100vh;
+    }
+
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* --- Dropdown row layout --- */
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .select-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      min-width: 220px;
+      flex: 1 1 220px;
+    }
+
+    .select-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+    }
+
+    select {
+      background: #020617;
+      color: #e5e7eb;
+      border-radius: 0.5rem;
+      border: 1px solid #374151;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    select:focus {
+      border-color: #10b981;
+      box-shadow: 0 0 0 1px #10b98144;
+    }
+
+    select:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* --- Details card --- */
+    .details-card {
+      border-radius: 0.75rem;
+      border: 1px solid #374151;
+      background: #020617;
+      padding: 1rem 1.25rem;
+    }
+
+    .details-category {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6b7280;
+      margin-bottom: 0.25rem;
+    }
+
+    .details-name {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .details-tags {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-bottom: 0.75rem;
+    }
+
+    .details-summary {
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .details-description {
+      font-size: 0.9rem;
+      color: #d1d5db;
+      margin-bottom: 0.75rem;
+      white-space: pre-line;
+    }
+
+    .details-section-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin: 0.75rem 0 0.25rem;
+    }
+
+    .details-body-text {
+      font-size: 0.85rem;
+      color: #e5e7eb;
+      white-space: pre-line;
+    }
+
+    .details-body-text ul {
+      padding-left: 1.1rem;
+      margin: 0.25rem 0;
+    }
+
+    .details-body-text li {
+      margin-bottom: 0.15rem;
+    }
+
+    .muted {
+      color: #6b7280;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    <header>
+      <h1>G RPG Library Viewer</h1>
+    </header>
+
+    <main>
+      <!-- CATEGORY + RECORD DROPDOWNS -->
+      <section class="controls-row">
+        <div class="select-group">
+          <label for="categorySelect" class="select-label">Category</label>
+          <select id="categorySelect">
+            <option value="">Select a category…</option>
+            <!-- Options filled by JS -->
+          </select>
+        </div>
+
+        <div class="select-group">
+          <label for="recordSelect" class="select-label" id="recordSelectLabel">
+            Record
+          </label>
+          <select id="recordSelect" disabled>
+            <option value="">Select a record…</option>
+            <!-- Options filled by JS -->
+          </select>
+        </div>
+      </section>
+
+      <!-- DETAILS PANEL -->
+      <section class="details-card" id="detailsPanel">
+        <p class="muted">
+          Choose a category, then a specific entry to see its full details here.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <!-- Load data file (defines window.GRPG_LIBRARY) -->
+  <script src="library.js"></script>
+
+  <script>
+    // Helper: safely get the library object (or null if missing).
+    function getLibrary() {
+      if (window.GRPG_LIBRARY) {
+        return window.GRPG_LIBRARY;
+      }
+      return null;
+    }
+
+    // Helper: format keys like "baseSpeedFeet" or "dodgeChance" into labels.
+    function formatStatKey(key) {
+      if (!key) return "";
+      var withSpaces = key.replace(/([A-Z])/g, " $1").replace(/_/g, " ");
+      return withSpaces.replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    }
+
+    // Build a mechanics section for Race records (speed, attribute mods, traits, abilities).
+    function renderRaceMechanics(record, library) {
+      var mech = record.mechanics || {};
+      var lines = [];
+
+      // Base speed
+      if (mech.baseSpeedFeet != null) {
+        lines.push('<strong>Base Speed:</strong> ' + mech.baseSpeedFeet + ' feet');
+      }
+
+      // Attribute modifiers
+      if (mech.attributeMods && typeof mech.attributeMods === "object") {
+        var attrs = Object.keys(mech.attributeMods).map(function (key) {
+          var label = formatStatKey(key);
+          var val = mech.attributeMods[key];
+          var sign = val >= 0 ? "+" : "";
+          return sign + val + " " + label;
+        });
+        if (attrs.length) {
+          lines.push('<strong>Attribute Mods:</strong> ' + attrs.join(", "));
+        }
+      }
+
+      var html = "";
+
+      if (lines.length) {
+        html += '<div class="details-section-label">Race Mechanics</div>';
+        html += '<div class="details-body-text">' + lines.join("<br>") + "</div>";
+      }
+
+      // Innate traits (by name if we have them)
+      if (Array.isArray(mech.innateTraits) && mech.innateTraits.length) {
+        var traitHtml = [];
+        mech.innateTraits.forEach(function (traitId) {
+          var label = traitId;
+          if (library && library.traits && library.traits[traitId]) {
+            var t = library.traits[traitId];
+            label = (t.name || traitId) + ' <span class="muted">(' + traitId + ')</span>';
+          }
+          traitHtml.push(label);
+        });
+
+        if (traitHtml.length) {
+          html += '<div class="details-section-label">Innate Traits</div>';
+          html += '<div class="details-body-text"><ul>';
+          traitHtml.forEach(function (entry) {
+            html += "<li>" + entry + "</li>";
+          });
+          html += "</ul></div>";
+        }
+      }
+
+      // Innate abilities (pull name + summary from abilities table)
+      if (Array.isArray(mech.innateAbilities) && mech.innateAbilities.length) {
+        var abilityHtml = [];
+        mech.innateAbilities.forEach(function (abilityId) {
+          var label = abilityId;
+          if (library && library.abilities && library.abilities[abilityId]) {
+            var a = library.abilities[abilityId];
+            label = "<strong>" + (a.name || abilityId) + "</strong>";
+            if (a.summary) {
+              label += " – " + a.summary;
+            }
+            label += ' <span class="muted">(' + abilityId + ')</span>';
+          }
+          abilityHtml.push(label);
+        });
+
+        if (abilityHtml.length) {
+          html += '<div class="details-section-label">Innate Abilities</div>';
+          html += '<div class="details-body-text"><ul>';
+          abilityHtml.forEach(function (entry) {
+            html += "<li>" + entry + "</li>";
+          });
+          html += "</ul></div>";
+        }
+      }
+
+      return html;
+    }
+
+    // Update the big details panel with the chosen record.
+    function showDetails(categoryName, record) {
+      var detailsPanel = document.getElementById("detailsPanel");
+
+      if (!record) {
+        detailsPanel.innerHTML =
+          '<p class="muted">Choose a category, then a specific entry to see its full details here.</p>';
+        return;
+      }
+
+      var tagsArray = Array.isArray(record.tags) ? record.tags : [];
+      var tags = tagsArray.length > 0 ? tagsArray.join(", ") : "—";
+
+      var rulesText = "";
+      if (record.mechanics && typeof record.mechanics.rulesText === "string") {
+        rulesText = record.mechanics.rulesText;
+      }
+
+      var html = "";
+
+      html += '<div class="details-category">' + categoryName + "</div>";
+      html += '<div class="details-name">' + (record.name || "(Unnamed)") + "</div>";
+      html += '<div class="details-tags"><strong>ID:</strong> ' +
+        (record.id || "—") +
+        " | <strong>Tags:</strong> " +
+        tags +
+        "</div>";
+
+      if (record.summary) {
+        html += '<div class="details-summary">' + record.summary + "</div>";
+      }
+
+      if (record.description) {
+        html += '<div class="details-description">' + record.description + "</div>";
+      }
+
+      // Extra info for Races: show mechanics & connected abilities/traits.
+      if (categoryName === "Race") {
+        var library = getLibrary();
+        html += renderRaceMechanics(record, library);
+      }
+
+      if (rulesText) {
+        html += '<div class="details-section-label">Rules</div>';
+        html += '<div class="details-body-text">' + rulesText + "</div>";
+      }
+
+      if (record.source) {
+        var srcText = (record.source.book || "");
+        if (record.source.page) {
+          srcText += ", p. " + record.source.page;
+        }
+        html += '<div class="details-section-label">Source</div>';
+        html += '<div class="details-body-text">' + srcText + "</div>";
+      }
+
+      if (record.version || record.createdAt || record.updatedAt) {
+        html += '<div class="details-section-label">Version</div>';
+        var versionParts = [];
+        if (record.version) {
+          var major = (record.version.major !== undefined) ? record.version.major : "?";
+          var minor = (record.version.minor !== undefined) ? record.version.minor : "?";
+          versionParts.push("v" + major + "." + minor);
+        }
+        if (record.createdAt) {
+          versionParts.push("created " + record.createdAt);
+        }
+        if (record.updatedAt) {
+          versionParts.push("updated " + record.updatedAt);
+        }
+        html += '<div class="details-body-text">' + versionParts.join(" · ") + "</div>";
+      }
+
+      detailsPanel.innerHTML = html;
+    }
+
+    // MAIN INITIALIZATION
+    (function init() {
+      var library = getLibrary();
+      var categorySelect = document.getElementById("categorySelect");
+      var recordSelect = document.getElementById("recordSelect");
+      var recordSelectLabel = document.getElementById("recordSelectLabel");
+
+      if (!library) {
+        var detailsPanel = document.getElementById("detailsPanel");
+        detailsPanel.innerHTML =
+          '<p class="muted">Error: library.js did not load correctly. ' +
+          'Check that the file name matches exactly and is in the same folder as index.html.</p>';
+        return;
+      }
+
+      // Map of categories we support
+      var CATEGORY_CONFIG = [
+        { key: "races",    label: "Races",    displayName: "Race" },
+        { key: "classes",  label: "Classes",  displayName: "Class" },
+        { key: "traits",   label: "Traits",   displayName: "Trait" },
+        { key: "abilities",label: "Abilities",displayName: "Ability" }
+      ];
+
+      // Populate category dropdown with only categories that have data.
+      CATEGORY_CONFIG.forEach(function (cat) {
+        var table = library[cat.key];
+        if (table && Object.keys(table).length > 0) {
+          var opt = document.createElement("option");
+          opt.value = cat.key;
+          opt.textContent = cat.label;
+          categorySelect.appendChild(opt);
+        }
+      });
+
+      var currentCategoryKey = "";
+      var currentCategoryDisplayName = "";
+
+      // When the category changes, repopulate the record dropdown.
+      categorySelect.addEventListener("change", function () {
+        currentCategoryKey = categorySelect.value;
+        currentCategoryDisplayName = "";
+
+        // Clear record select
+        recordSelect.innerHTML = '<option value="">Select a record…</option>';
+        recordSelect.disabled = true;
+
+        // Reset details panel
+        showDetails("", null);
+
+        if (!currentCategoryKey) return;
+
+        var config = CATEGORY_CONFIG.find(function (c) {
+          return c.key === currentCategoryKey;
+        });
+        if (!config) return;
+
+        currentCategoryDisplayName = config.displayName;
+        recordSelectLabel.textContent = config.label.slice(0, -1) || "Record";
+
+        var table = library[currentCategoryKey];
+        if (!table) return;
+
+        var records = Object.values(table);
+
+        // Sort by name if present
+        records.sort(function (a, b) {
+          return (a.name || "").localeCompare(b.name || "");
+        });
+
+        records.forEach(function (rec) {
+          var opt = document.createElement("option");
+          opt.value = rec.id;
+          opt.textContent = rec.name || rec.id;
+          recordSelect.appendChild(opt);
+        });
+
+        if (records.length > 0) {
+          recordSelect.disabled = false;
+          // Auto-select first record and show its details.
+          recordSelect.value = records[0].id;
+          showDetails(currentCategoryDisplayName, records[0]);
+        }
+      });
+
+      // When a specific record is chosen, show its details.
+      recordSelect.addEventListener("change", function () {
+        if (!currentCategoryKey) return;
+        var table = library[currentCategoryKey];
+        if (!table) return;
+
+        var recordId = recordSelect.value;
+        var rec = table[recordId];
+        if (!rec) {
+          showDetails("", null);
+          return;
+        }
+        showDetails(currentCategoryDisplayName, rec);
+      });
+
+      // Optionally choose the first available category by default.
+      if (categorySelect.options.length > 1) {
+        categorySelect.selectedIndex = 1;
+        categorySelect.dispatchEvent(new Event("change"));
+      }
+    })();
+  </script>
+</body>
+</html>
